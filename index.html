@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<head>
+<title>Final Project</title>
+<script src="https://csc4300-fall2021.github.io/lib/three.js"></script>
+<script src="https://csc4300-fall2021.github.io/lib/KeyboardState.js"></script>
+<script src="https://csc4300-fall2021.github.io/lib/OrbitControls.js"></script>
+
+<script>
+    var scene, camera, renderer; // Three.js rendering basics
+
+    var canvas; // The canvas on which the image is rendered
+
+    var grimBody,
+        grimLeftJoint,
+        grimRightJoint,
+        grimLeftLeg,
+        grimRightLeg,
+        grimLeftFoot,
+        grimRightFoot,
+        grimNeck,
+        grimHead;
+
+    var eyelight;
+
+    var grim;
+    var platform;
+    var moon;
+    var moon2;
+    var moon3;
+    var island;
+
+    var mouse;
+    var keyboard = new KeyboardState();
+    var clock = new THREE.Clock();
+    var startTime = clock.getElapsedTime();
+    var angle = 0.1;
+
+    var bodyR = 6;
+    var midR = bodyR;
+    var propH = 1.5
+    var tube = 1;
+    var limbR = 1.25;
+    var limbH = 5;
+    var jointR = 1.75;
+    var footR = 2.5;
+    var footH = 2;
+    var neckR = 2.5;
+    var neckH = 1;
+    var headR = 5;
+    var faceR = 3;
+    var platR = 300;
+    var platH = 50;
+    var moonR = 150;
+    var proH = 30;
+    var proW = 6;
+    var fogNear = 0.1;
+    var fogFar = 1400;
+    var islandRadius = 30;
+    var islandHeight = 10;
+
+    //time, leftLeg, rightLeg, mid, grim.x, grim.y, grim.z, camera.x, camera.y, camera.z, grim.rotation.y)
+    var keyframes =
+    [
+        [ 0.0000, 0, 0, 0, 0, 40, 250, -321.523, 352.661, 543.666, 0],
+        [ 0.1096, 0, 0, 0, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1233, 0, 0, 0, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1370, 0, 0, 0, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1425, 0, 0, 2, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1480, 0, 0, 4, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1534, 0, 0, 6, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1590, 0, 0, 8, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1644, 0, 0, 10, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1781, 0, 0, 10, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1918, 0, 0, 12, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.1973, 0, 0, 14, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2028, 0, 0, 16, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2082, 0, 0, 18, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2137, 0, 0, 20, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2192, 0, 0, 20, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2247, 0, 0, 22, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2302, 0, 0, 24, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2356, 0, 0, 26, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2411, 0, 0, 28, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2466, 0, 0, 30, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2521, 0, 0, 32, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2576, 0, 0, 34, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2630, 0, 0, 36, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2685, 0, 0, 38, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.2740, 0, 0, 40, 0, 40, 250, 6.331, 77.7, 453.406, 0],
+        [ 0.3288, 0.8, 0.8, 60, 0, 120, 250, 6.331, 150, 453.406, 0],
+        [ 0.3425, 0.8, 0.8, 65, 0, 120, 250, 6.331, 150, 453.406, 0],
+        [ 0.3699, 0.8, 0.8, 75, 0, 120, 250, 6.331, 150, 453.406, 0],
+        [ 0.4247, 0.8, 0.8, 95, 0, 200, 250, 6.331, 250, 453.406, 0.24],
+        [ 0.4521, 0.8, 0.8, 105, 0, 200, 250, 11.284, 372.908, 359.067, 0.24],
+        [ 0.4795, 0.8, 0.8, 115, 0, 200, 250, 11.284, 372.908, 359.067, 0.24],
+        [ 0.5206, 0.8, 0.8, 130, -47.049, 200, 114.450, -39.482, 486.187, 173.780, 0.24],
+        [ 0.6028, 0.8, 0.8, 160, -47.049, 200, 114.450, -96.261, 273.619, 276.422, 0.24],
+        [ 0.7124, 0.0, 0.0, 200, -47.049, 170.699, 114.450, -96.261, 273.619, 276.422, 0.24],
+        [ 0.7261, 0.0, 0.0, 200, -47.049, 170.699, 114.450, -96.261, 273.619, 276.422, 0.24],
+        [ 0.7809, 0.0, 0.0, 200, -47.049, 170.699, 114.450, -115.838, 222.018, 333.758, 0.24],
+        [ 0.8357, 0.0, 0.0, 220, -47.049, 170.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.8631, 0.0, 0.0, 230, -47.049, 180.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.8768, 0.0, 0.0, 235, -47.049, 180.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.8905, 0.0, 0.0, 240, -47.049, 178.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.9042, 0.0, 0.0, 245, -47.049, 180.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.9453, 0.0, 0.0, 260, -47.049, 180.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.9864, 0.0, 0.0, 265, -47.049, 180.699, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 0.9950, 2.0, 2.0, 265, -47.049, 164.749, 114.450, -120.838, 222.018, 333.758, 0.24],
+        [ 1.000, 2.0, 2.0, 265, -47.049, 164.749, 114.450, -120.838, 222.018, 333.758, 0.24]
+    ];
+
+     function keyframeInterp(keyframes, cycleTime, animTime) {
+
+        var keys=[];  // array of interpolated values
+        var nKeys = keyframes[0].length-1;  // number of keys
+
+        // find time elapsed within the current cycle and scale to [0,1]
+        var time = (animTime % cycleTime) / cycleTime; 
+    
+        // find the next keyframe based on time
+        for (var i = 0; i < keyframes.length; i++) {
+            if (time < keyframes[i][0]) break;
+        }
+        i = i-1; // previous keyframe is at index i-1
+
+        // scale interpolation parameter t to interval [0,1]
+        var t = (time - keyframes[i][0]) / (keyframes[i+1][0] - keyframes[i][0]); 
+    
+        // linear interpolation between keyframes i and i+1 
+        for(var j = 1; j <= nKeys; j++)
+            keys.push((1-t) * keyframes[i][j] + t * keyframes[i+1][j]); 
+
+        return keys;
+    }
+
+
+    // Create a camera, sitting on the positive z-axis.  The camera is not part of the scene
+    function createCamera() {
+        camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 1, 1200);
+        camera.position.set(-100, 230,240);
+
+        // Add orbit control to allow the camera orbit around
+        mouse = new THREE.OrbitControls(camera, renderer.domElement);
+    }
+
+    function createBody(radius)
+    {
+        var geom = new THREE.SphereGeometry(radius,100,100);
+        var mat = new THREE.MeshPhongMaterial( { color: "black" } );
+        var body = new THREE.Mesh(geom,mat);
+
+        return body;
+    }
+
+    function createFace(radius)
+    {
+        var face = new THREE.PointLight("#cc0000",3);
+        var geom = new THREE.TorusKnotGeometry(radius,.75,100,100,2,5);
+        var mat = new THREE.MeshPhongMaterial({color: "#990000"})
+        var mesh = new THREE.Mesh(geom,mat);
+
+        face.add(mesh);
+
+        return face;
+    }
+
+    function createHead(radius)
+    {
+        var s = new THREE.SphereGeometry(radius,100,100);
+        var geom = new THREE.BufferGeometry().fromGeometry( s );
+        var mat = new THREE.MeshBasicMaterial( { color: "black",
+        transparent: true,
+        opacity: 0.5 } );
+        var head = new THREE.Mesh(geom,mat);
+
+        head.renderOrder = -5;
+
+        return head;
+    }
+
+
+
+    function createPropellar(width,height)
+    {
+        var prop = new THREE.Object3D();
+        var geom = new THREE.PlaneGeometry(height,width);
+        var mat = new THREE.MeshPhongMaterial( {color: "black", side: THREE.DoubleSide });
+        var mesh = new THREE.Mesh(geom,mat);
+
+        prop.add(mesh);
+
+        return prop;
+    }
+
+
+    function createMid(midR, tube)
+    {
+        var mid = new THREE.PointLight("#cc0000",10);
+        var geom = new THREE.TorusGeometry(midR,tube,5,12);
+        var mat = new THREE.MeshPhongMaterial( { color : "#cc0000", side: THREE.DoubleSide} );
+        var mesh = new THREE.Mesh(geom,mat);
+
+        mid.add(mesh);
+
+        mid.rotation.x = Math.PI/2;
+
+        return mid;
+    }
+
+    function createFoot(radius, height)
+    {
+        var foot = new THREE.Object3D();
+        var mat = new THREE.MeshPhongMaterial( { color: "black" } );
+        var geom = new THREE.SphereGeometry(radius, 32, 32, 0, 2*Math.PI, 0, Math.PI/2 );
+        var mesh = new THREE.Mesh(geom,mat);
+        mesh.scale.y = height/radius;
+        mesh.position.y = -height;
+        foot.add(mesh);
+        var capGeom = new THREE.CircleGeometry(radius, 32);
+        var capMesh = new THREE.Mesh(capGeom, mat);
+        capMesh.rotation.x = Math.PI / 2;
+        mesh.add(capMesh);
+
+        return foot;
+    }
+
+    function createLimb(radius,height)
+    {
+        var limb = new THREE.Object3D();
+        var mat = new THREE.MeshPhongMaterial( { color: "black" } );
+        var geom = new THREE.CylinderGeometry(radius, radius, height, 64, 64);
+        var mesh = new THREE.Mesh(geom,mat);
+        mesh.position.y -= height/2;
+        limb.add(mesh);
+
+        return limb;
+    }
+
+    function createGrim()
+    {
+        //Grim parts
+        var body = createBody(bodyR);
+        var leftJoint = createBody(jointR);
+        var rightJoint = createBody(jointR);
+        var mid = createMid(midR,tube);
+        var leftLeg = createLimb(limbR,limbH);
+        var rightLeg = createLimb(limbR,limbH);
+        var leftFoot = createFoot(footR,footH);
+        var rightFoot = createFoot(footR,footH);
+        var neck = createLimb(neckR,neckH);
+        var head = createFace(faceR);
+        var headAddition = createHead(headR+0.5);
+        var propellar1 = createPropellar(proW,proH);
+        var propellar2 = createPropellar(proW,proH);
+
+        //Adding Heirarchical Structures
+        var g = new THREE.Object3D();
+
+        g.add(body);    
+        body.add(mid);                              
+        body.add(leftJoint);                        
+        body.add(rightJoint);                             
+        body.add(neck);
+        mid.add(propellar1);
+        mid.add(propellar2);
+        leftJoint.add(leftLeg);           
+        rightJoint.add(rightLeg);         
+        leftLeg.add(leftFoot);          
+        rightLeg.add(rightFoot);                 
+        neck.add(head);
+        head.add(headAddition);
+
+        //Positioning
+        leftJoint.position.y -= bodyR+jointR/2;
+        leftJoint.position.x -= bodyR/2;
+        rightJoint.position.y -= bodyR+jointR/2;
+        rightJoint.position.x += bodyR/2;
+        leftLeg.position.y -= jointR;
+        rightLeg.position.y -= jointR;
+        leftFoot.position.y -= limbH;
+        rightFoot.position.y -= limbH;
+        neck.position.y += bodyR+neckH;
+        head.position.y += headR/2+neckH*2;
+        propellar1.rotation.z += Math.PI/2;
+        return g;
+    }
+
+    function createPlatform(radius,height)
+    {
+        var plat = new THREE.Object3D();
+        var mat = new THREE.MeshPhongMaterial( { color: "black" } );
+        var geom = new THREE.CylinderGeometry(radius, radius, height, 64, 64);
+        var mesh = new THREE.Mesh(geom,mat);
+        plat.add(mesh);
+
+
+        return plat;
+    }
+
+    function createMoon(radius,color)
+    {
+        var moonBase = new THREE.SphereGeometry(radius,100,100);
+        var moon = new THREE.PointLight(color,5);
+        moon.add( new THREE.Mesh( moonBase, new THREE.MeshBasicMaterial( { 
+            color: color,
+            transparent: true,
+            opacity: 0.5} ) ) );
+        return moon;
+    }
+
+    function createSpike(topRadius, bottomRadius, height)
+    {
+        var spike = new THREE.PointLight("#66ffff",1);
+        var mat = new THREE.MeshPhongMaterial( { color: "#66ffff" } );
+        var geom = new THREE.CylinderGeometry(topRadius, bottomRadius, height, 64, 64);
+        var mesh = new THREE.Mesh(geom,mat);
+
+        mesh.position.y += height/2;
+
+        spike.add(mesh);
+
+        return spike;
+    }
+
+    function createIsland()
+    {
+        var land = new THREE.Object3D();
+
+        var base = createPlatform(islandRadius,islandHeight);
+        var spike1 = createSpike(0,5,45);
+        var spike2 = createSpike(0,8,30);
+        var spike3 = createSpike(0,8,40);
+        var spike4 = createSpike(0,6,50);
+        var spike5 = createSpike(0,10,35);
+
+        land.add(base);
+        base.add(spike1);
+        base.add(spike2);
+        base.add(spike3);
+        base.add(spike4);
+        base.add(spike5);
+
+        spike1.rotation.z += Math.PI;
+        spike2.rotation.z += Math.PI;
+        spike3.rotation.z += Math.PI;
+        spike4.rotation.z += Math.PI;
+        spike5.rotation.z += Math.PI;
+        spike2.position.x += 10;
+        spike3.position.x -= 10;
+        spike4.position.z += 10;
+        spike5.position.z -= 15;
+        
+        return land;
+    }
+
+    // Create the scene. This function is called once, as soon as the page loads.
+    // The renderer has already been created before this function is called.
+    function createScene() 
+    {
+
+        renderer.setClearColor(0); // Set background color (0, or 0x000000, is black)
+        scene = new THREE.Scene(); // Create a new scene which we can add objects to
+
+        scene.background = new THREE.Color('black');
+
+        createLights();
+
+        //Adding Grim to scene
+        grim = createGrim();
+        scene.add(grim);
+
+        //Adding platform to scene
+        platform = createPlatform(platR,platH);
+        scene.add(platform);
+
+        //Adding moon to scene
+        moon = createMoon(moonR,"red");
+        scene.add(moon);
+        moon2 = createMoon(moonR,"#944dff");
+        scene.add(moon2);
+        moon3 = createMoon(moonR,"#1a1aff");
+        scene.add(moon3);
+
+        //Adding island to scene
+        island =  createIsland();
+        scene.add(island);
+
+        scene.fog = new THREE.Fog("white", fogNear, fogFar);
+
+
+
+        //Assigning Grim parts
+        grimBody = grim.children[0];
+        grimMid = grimBody.children[0];
+        grimLeftJoint = grimBody.children[1];
+        grimRightJoint = grimBody.children[2];
+        grimLeftLeg = grimLeftJoint.children[0];
+        grimRightLeg = grimRightJoint.children[0];
+        grimNeck = grimBody.children[3];
+        grimHead = grimNeck.children[0];
+        
+
+        //Positioning
+        //grim.position.y += platH-10;
+        //grim.position.z += 250;
+
+        grim.position.set(-47.049, 180.699, 114.450);
+        grim.rotation.y += 0.24;
+       
+
+        moon.position.y += 300;
+        moon.position.z -= 555;
+        moon2.position.z += 500;
+        moon2.position.y += 222;
+        moon3.position.y -= 333;
+        moon3.position.z += 500;
+        //moon3.position.x -= 666;
+    
+        island.position.set(-50,150,100);
+
+    
+   }
+
+   function createLights()
+    {
+        // Ambient Light (color, intensity)
+        var ambient = new THREE.AmbientLight(0x404040); // soft white
+        scene.add(ambient);
+
+        // DirectionalLight (color, intensity) in the direction the camera faces
+        eyeLight = new THREE.DirectionalLight( "white", 0.7 );  // global, do not redefine here
+        eyeLight.position.set(camera.position.x,camera.position.y,camera.position.z);  // camera viewpoint
+        scene.add(eyeLight);
+
+        // Dim DirectionalLight (color, intensity) shining from above
+        var topLight = new THREE.DirectionalLight( "white", 0.2 ); 
+        topLight.position.set(0,500,0);
+        scene.add( topLight );
+    }
+
+    function update()
+    {
+        mouse.update();
+    
+        keyboard.update();
+
+        if(keyboard.pressed("Q"))
+        {
+            grimLeftLeg.rotation.x += 0.05;
+        }
+        if(keyboard.pressed("A"))
+        {
+            grimLeftLeg.rotation.x -= 0.05;
+        }
+        if(keyboard.pressed("W"))
+        {
+            grimRightLeg.rotation.x += 0.05;
+        }
+        if(keyboard.pressed("S"))
+        {
+            grimRightLeg.rotation.x -= 0.05;
+        }
+        if(keyboard.pressed("up"))
+        {
+            grim.position.y += 0.05;
+        }
+        if(keyboard.pressed("down"))
+        {
+            grim.position.y -= 0.05;
+        }
+        if(keyboard.pressed("left"))
+        {
+            grim.position.x -= 0.05;
+        }
+        if(keyboard.pressed("right"))
+        {
+            grim.position.x += 0.05;
+        }
+        if(keyboard.pressed("O"))
+        {
+            grim.position.z += 0.05;
+        }
+        if(keyboard.pressed("L"))
+        {
+            grim.position.z -= 0.05;
+        }
+        
+        if(keyboard.down("Z"))
+        {
+            console.log("left leg = " + grimLeftLeg.rotation.x);
+            console.log("right leg = " + grimRightLeg.rotation.x);
+            console.log("mid = " + grimMid.rotation.z);
+            console.log("x = " + grim.position.x);
+            console.log("y = " + grim.position.y);
+            console.log("z = " + grim.position.z);
+            console.log("camera x = " + camera.position.x)
+            console.log("camera y = " + camera.position.y)
+            console.log("camera z = " + camera.position.z)
+        }
+    }
+
+
+    // Render the scene. This is called for each frame of the animation.
+    function render() 
+    {
+        requestAnimationFrame(render);
+
+       var keys = keyframeInterp(keyframes, 36.496, clock.getElapsedTime() - startTime);
+
+        grimLeftLeg.rotation.x = keys[0];
+        grimRightLeg.rotation.x = keys[1];
+        grimMid.rotation.z = keys[2];
+        grim.position.x = keys[3];
+        grim.position.y = keys [4];
+        grim.position.z = keys[5];
+
+        grimNeck.rotation.y += angle*.005;
+    
+        camera.position.x = keys[6];
+        camera.position.y = keys[7];
+        camera.position.z = keys[8];
+
+        moon.position.x += Math.cos(angle) * 6;
+        moon.position.z += Math.sin(angle) * 6;
+
+        moon2.position.x -= Math.cos(angle) * 10;
+        moon2.position.z -= Math.sin(angle) * 10;
+
+        moon3.position.x += Math.cos(angle) * 7;
+        moon3.position.z -= Math.sin(angle) * 7;
+
+        angle += 0.015;
+
+        renderer.render(scene, camera);
+
+        update();
+    }
+
+    // reset canvas size and camera aspect ratio on window resize
+    function onWindowResize() {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
+
+    //----------------------------------------------------------------------------------
+
+    // The main() function is called by the onload event when the document has loaded.
+    function main() 
+    {
+        try {
+            canvas = document.getElementById("glcanvas");
+            renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true} );
+            // set full screen
+            renderer.setSize(window.innerWidth, window.innerHeight); 
+            // adjust on window resize
+            window.addEventListener('resize', onWindowResize);             
+        }
+        catch (e) {
+            document.getElementById("canvas-holder").innerHTML = "<h3><b>WebGL is not available.</b><h3>";
+            return;
+        }
+    
+        // create camera
+        createCamera();
+        
+        // create scene 
+        createScene();
+
+        // render scene
+        render();
+    }
+
+</script>
+
+</head>
+<body onload="main()">
+<div id="canvas-holder">
+    <canvas id="glcanvas" width="1200" height="600"></canvas>
+</div>
+</body>
+</html>
